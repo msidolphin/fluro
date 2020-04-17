@@ -202,26 +202,26 @@ class HomeComponentState extends State<HomeComponent> {
     String message = "";
     String hexCode = "#FFFFFF";
     String result;
-    TransitionType transitionType = TransitionType.native;
+    Transition transition = Transition.fade;
     if (key != "custom" && key != "function-call" && key != "fixed-trans") {
       if (key == "native") {
         hexCode = "#F76F00";
         message =
-            "This screen should have appeared using the default flutter animation for the current OS";
+        "This screen should have appeared using the default flutter animation for the current OS";
       } else if (key == "preset-from-left") {
         hexCode = "#5BF700";
         message =
-            "This screen should have appeared with a slide in from left transition";
-        transitionType = TransitionType.inFromLeft;
+        "This screen should have appeared with a slide in from left transition";
+        transition = Transition.leftToRight;
       } else if (key == "preset-fade") {
         hexCode = "#F700D2";
         message = "This screen should have appeared with a fade in transition";
-        transitionType = TransitionType.fadeIn;
+        transition = Transition.fade;
       } else if (key == "pop-result") {
-        transitionType = TransitionType.native;
+        transition = Transition.fade;
         hexCode = "#7d41f4";
         message =
-            "When you close this screen you should see the current day of the week";
+        "When you close this screen you should see the current day of the week";
         result = "Today is ${_daysOfWeek[DateTime.now().weekday - 1]}!";
       }
 
@@ -232,7 +232,7 @@ class HomeComponentState extends State<HomeComponent> {
       }
 
       Application.router
-          .navigateTo(context, route, transition: transitionType)
+          .navigateTo(context, route, transition: transition)
           .then((result) {
         if (key == "pop-result") {
           Application.router.navigateTo(context, "/demo/func?message=$result");
@@ -241,7 +241,7 @@ class HomeComponentState extends State<HomeComponent> {
     } else if (key == "custom") {
       hexCode = "#DFF700";
       message =
-          "This screen should have appeared with a crazy custom transition";
+      "This screen should have appeared with a crazy custom transition";
       var transition = (BuildContext context, Animation<double> animation,
           Animation<double> secondaryAnimation, Widget child) {
         return ScaleTransition(
@@ -255,7 +255,7 @@ class HomeComponentState extends State<HomeComponent> {
       Application.router.navigateTo(
         context,
         "/demo?message=$message&color_hex=$hexCode",
-        transition: TransitionType.custom,
+        transition: null,
         transitionBuilder: transition,
         transitionDuration: const Duration(milliseconds: 600),
       );

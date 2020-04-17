@@ -62,8 +62,12 @@ enum RouteMatchType {
 class RouteMatch {
   RouteMatch(
       {this.matchType = RouteMatchType.noMatch,
-      this.route,
-      this.errorMessage = "Unable to match route. Please check the logs."});
+        this.route,
+        this.handler,
+        this.parameters,
+        this.errorMessage = "Unable to match route. Please check the logs."});
+  final Handler handler;
+  final Map<String, List<String>> parameters;
   final Route<dynamic> route;
   final RouteMatchType matchType;
   final String errorMessage;

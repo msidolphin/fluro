@@ -6,6 +6,8 @@
  * Copyright (c) 2019 Yakka, LLC. All rights reserved.
  * See LICENSE for distribution and usage details.
  */
+import 'package:fluro/fluro.dart';
+
 import '../../helpers/color_helpers.dart';
 import 'package:flutter/material.dart';
 

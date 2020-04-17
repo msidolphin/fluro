@@ -30,6 +30,7 @@ class AppComponentState extends State<AppComponent> {
   Widget build(BuildContext context) {
     final app = MaterialApp(
       title: 'Fluro',
+      navigatorKey: Router.key,
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.blue,

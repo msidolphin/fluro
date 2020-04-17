@@ -14,8 +14,14 @@ import 'package:fluro/src/common.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+
+import '../fluro.dart';
 
 class Router {
+
+  static final GlobalKey<NavigatorState> key = Get.key;
+
   static final appRouter = Router();
 
   /// The tree structure that stores the defined routes
@@ -38,17 +44,17 @@ class Router {
     return _routeTree.matchRoute(path);
   }
 
-  void pop(BuildContext context) => Navigator.pop(context);
+  void pop(dynamic result) => Get.back(result: result);
 
   ///
   Future navigateTo(BuildContext context, String path,
       {bool replace = false,
       bool clearStack = false,
-      TransitionType transition,
+      Transition transition = Transition.fade,
       Duration transitionDuration = const Duration(milliseconds: 250),
       RouteTransitionsBuilder transitionBuilder}) {
-    RouteMatch routeMatch = matchRoute(context, path,
-        transitionType: transition,
+    RouteMatch routeMatch = $matchRoute(context, path,
+        transition: transition,
         transitionsBuilder: transitionBuilder,
         transitionDuration: transitionDuration);
     Route<dynamic> route = routeMatch.route;
@@ -61,13 +67,18 @@ class Router {
         route = _notFoundRoute(context, path);
       }
       if (route != null) {
-        if (clearStack) {
-          future =
-              Navigator.pushAndRemoveUntil(context, route, (check) => false);
+        if (transition == null) {
+          future = Navigator.push(context, route);
         } else {
-          future = replace
-              ? Navigator.pushReplacement(context, route)
-              : Navigator.push(context, route);
+          Widget widget = routeMatch.handler.handlerFunc(context, routeMatch.parameters);
+          if (clearStack) {
+            future = Get.offAll(widget, transition: transition);
+          } else {
+            if (replace) future = Get.off(widget, transition: transition);
+            else {
+              future = Get.to(widget, transition: transition);
+            }
+          }
         }
         completer.complete();
       } else {
@@ -129,37 +140,37 @@ class Router {
       if (isNativeTransition) {
         if (Theme.of(buildContext).platform == TargetPlatform.iOS) {
           return CupertinoPageRoute<dynamic>(
-              settings: routeSettings,
-              fullscreenDialog: transition == TransitionType.nativeModal,
-              builder: (BuildContext context) {
-                return handler.handlerFunc(context, parameters);
-              });
+            settings: routeSettings,
+            fullscreenDialog: transition == TransitionType.nativeModal,
+            builder: (BuildContext context) {
+              return handler.handlerFunc(context, parameters);
+          });
         } else {
           return MaterialPageRoute<dynamic>(
-              settings: routeSettings,
-              fullscreenDialog: transition == TransitionType.nativeModal,
-              builder: (BuildContext context) {
-                return handler.handlerFunc(context, parameters);
-              });
+          settings: routeSettings,
+          fullscreenDialog: transition == TransitionType.nativeModal,
+          builder: (BuildContext context) {
+            return handler.handlerFunc(context, parameters);
+          });
         }
       } else if (transition == TransitionType.material ||
           transition == TransitionType.materialFullScreenDialog) {
         return MaterialPageRoute<dynamic>(
-            settings: routeSettings,
-            fullscreenDialog:
-                transition == TransitionType.materialFullScreenDialog,
-            builder: (BuildContext context) {
-              return handler.handlerFunc(context, parameters);
-            });
+          settings: routeSettings,
+          fullscreenDialog:
+              transition == TransitionType.materialFullScreenDialog,
+          builder: (BuildContext context) {
+            return handler.handlerFunc(context, parameters);
+          });
       } else if (transition == TransitionType.cupertino ||
           transition == TransitionType.cupertinoFullScreenDialog) {
         return CupertinoPageRoute<dynamic>(
-            settings: routeSettings,
-            fullscreenDialog:
-                transition == TransitionType.cupertinoFullScreenDialog,
-            builder: (BuildContext context) {
-              return handler.handlerFunc(context, parameters);
-            });
+          settings: routeSettings,
+          fullscreenDialog:
+              transition == TransitionType.cupertinoFullScreenDialog,
+          builder: (BuildContext context) {
+            return handler.handlerFunc(context, parameters);
+          });
       } else {
         var routeTransitionsBuilder;
         if (transition == TransitionType.custom) {
@@ -181,6 +192,55 @@ class Router {
     return RouteMatch(
       matchType: RouteMatchType.visual,
       route: creator(settingsToUse, parameters),
+    );
+  }
+
+  RouteMatch $matchRoute(BuildContext buildContext, String path,
+      {
+        RouteSettings routeSettings,
+        Transition transition,
+        Duration transitionDuration = const Duration(milliseconds: 400),
+        RouteTransitionsBuilder transitionsBuilder}) {
+    RouteSettings settingsToUse = routeSettings;
+    if (routeSettings == null) {
+      settingsToUse = RouteSettings(name: path);
+    }
+    AppRouteMatch match = _routeTree.matchRoute(path);
+    AppRoute route = match?.route;
+    Handler handler = (route != null ? route.handler : notFoundHandler);
+    if (route == null && notFoundHandler == null) {
+      return RouteMatch(
+          matchType: RouteMatchType.noMatch,
+          errorMessage: "No matching route was found");
+    }
+    Map<String, List<String>> parameters =
+        match?.parameters ?? <String, List<String>>{};
+    if (handler.type == HandlerType.function) {
+      handler.handlerFunc(buildContext, parameters);
+      return RouteMatch(matchType: RouteMatchType.nonVisual);
+    }
+    if (transition == null) {
+      RouteCreator creator =
+      (RouteSettings routeSettings, Map<String, List<String>> parameters) {
+        var routeTransitionsBuilder = transitionsBuilder;
+        return PageRouteBuilder<dynamic>(
+          settings: routeSettings,
+          pageBuilder: (BuildContext context, Animation<double> animation,
+              Animation<double> secondaryAnimation) {
+            return handler.handlerFunc(context, parameters);
+          },
+          transitionDuration: transitionDuration,
+          transitionsBuilder: routeTransitionsBuilder,
+        );
+      };
+      return RouteMatch(
+        matchType: RouteMatchType.visual,
+        route: creator(settingsToUse, parameters),
+      );
+    }
+    return RouteMatch(
+      handler: handler,
+      parameters: parameters
     );
   }
 
