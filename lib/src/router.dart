@@ -63,10 +63,10 @@ class Router {
     if (routeMatch.matchType == RouteMatchType.nonVisual) {
       completer.complete("Non visual route type.");
     } else {
-      if (route == null && notFoundHandler != null) {
+      if (route == null && routeMatch.handler == null && notFoundHandler != null) {
         route = _notFoundRoute(context, path);
       }
-      if (route != null) {
+      if (route != null || routeMatch.handler != null) {
         if (transition == null) {
           future = Navigator.push(context, route);
         } else {
