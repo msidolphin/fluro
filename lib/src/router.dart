@@ -51,12 +51,12 @@ class Router {
 
   void pop(dynamic result) => Get.back(result: result);
 
-  void to(Widget page,
+  Future<T> to<T>(Widget page,
       {bool opaque = true,
         Transition transition,
         Duration duration,
         bool popGesture}) {
-    Get.to(page,
+    return Get.to<T>(page,
         opaque: opaque ?? true,
         popGesture: popGesture ?? _defaultPopGesture,
         transition: transition ?? _defaultTransition,
